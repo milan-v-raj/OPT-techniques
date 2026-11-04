@@ -1344,7 +1344,7 @@ It includes a linear taper bound:
 E_{it}\le
 \kappa_i
 \left(
-H_i-\sum_{\tau<t}E_{i\tau}
+H_i-\sum_{\tau \lt t}E_{i\tau}
 \right),
 ```
 
@@ -1587,7 +1587,7 @@ Energy scheduled before scenario departure:
 
 ```math
 C_i(d_{is})=
-\sum_{t<d_{is}}E_{it}.
+\sum_{t \lt d_{is}}E_{it}.
 ```
 
 Unmet energy in that scenario:
@@ -2875,7 +2875,7 @@ The slowest observed call.
 ### Main conclusion
 
 ```math
-21.4\text{ s}<300\text{ s}.
+21.4\text{ s} \lt 300\text{ s}.
 ```
 
 The tested online controllers finish within the control interval.
