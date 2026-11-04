@@ -84,9 +84,9 @@ This distinction matters when we discuss battery tapering.
 
 This is what the optimizer controls.
 
-\[
+$$
 R_{it}=\text{current allocated to EV }i\text{ during interval }t.
-\]
+$$
 
 ### Power: kilowatts, kW
 
@@ -94,17 +94,17 @@ Power is the instantaneous rate of energy transfer.
 
 The project uses:
 
-\[
+$$
 P_{it}=\frac{V_iR_{it}}{1000}.
-\]
+$$
 
 The modeled charger voltage is **208 V**.
 
 At the maximum current of **32 A**:
 
-\[
+$$
 P_{it}=\frac{208\times32}{1000}=6.656\text{ kW}.
-\]
+$$
 
 ### Energy: kilowatt-hours, kWh
 
@@ -112,16 +112,16 @@ Energy is power multiplied by time.
 
 One control period is five minutes:
 
-\[
+$$
 \Delta=\frac{5}{60}=\frac{1}{12}\text{ hour}.
-\]
+$$
 
 Therefore, charging at 32 A for one period delivers approximately:
 
-\[
+$$
 E_{it}=6.656\times\frac{1}{12}
 =0.555\text{ kWh}.
-\]
+$$
 
 **Remember:**
 - A: the control command.
@@ -139,9 +139,9 @@ Suppose a vehicle:
 
 At 6.656 kW, its ideal minimum charging time is:
 
-\[
+$$
 \frac{10}{6.656}\approx1.5\text{ hours}.
-\]
+$$
 
 But it remains parked for six hours.
 
@@ -151,13 +151,13 @@ We can distribute its charging across the six-hour window.
 
 This spare time is related to **laxity**:
 
-\[
+$$
 \text{Laxity}
 =
 \text{time remaining}
 -
 \text{minimum charging time required}.
-\]
+$$
 
 More laxity means more scheduling flexibility.
 
@@ -175,9 +175,9 @@ Chargers are connected between phase pairs:
 - CA
 
 The modeled phase angles are:
-- \(30^\circ\)
-- \(-90^\circ\)
-- \(150^\circ\)
+- $30^\circ$
+- $-90^\circ$
+- $150^\circ$
 
 Two schedules can have the same total kW but different loading on individual phases.
 
@@ -282,17 +282,17 @@ The reported summer weekday prices are:
 
 | Time | Price |
 |---|---:|
-| Midnight–8 a.m. | $0.0562/kWh |
-| 8 a.m.–noon | $0.0925/kWh |
-| Noon–6 p.m. | $0.2667/kWh |
-| 6 p.m.–11 p.m. | $0.0925/kWh |
-| 11 p.m.–midnight | $0.0562/kWh |
+| Midnight–8 a.m. | \$0.0562/kWh |
+| 8 a.m.–noon | \$0.0925/kWh |
+| Noon–6 p.m. | \$0.2667/kWh |
+| 6 p.m.–11 p.m. | \$0.0925/kWh |
+| 11 p.m.–midnight | \$0.0562/kWh |
 
 Demand charge:
 
-\[
+$$
 d=15.51\text{ dollars per kW}.
-\]
+$$
 
 **Precision point:** the experiment applies this tariff definition to September 2018 session data. These are simulated bills under the selected tariff, not recovered utility invoices.
 
@@ -304,16 +304,16 @@ There are two main financial components.
 
 ## 3.1 Energy charge
 
-\[
+$$
 \text{Energy charge}
 =
 \sum_t p_tP_t\Delta.
-\]
+$$
 
 Where:
-- \(p_t\): electricity price in interval \(t\).
-- \(P_t\): total charging power.
-- \(\Delta\): interval duration in hours.
+- $p_t$: electricity price in interval $t$.
+- $P_t$: total charging power.
+- $\Delta$: interval duration in hours.
 
 This term encourages charging during cheaper hours.
 
@@ -325,32 +325,32 @@ The monthly demand charge depends on the **highest billed power**, not total ene
 
 The project models billed demand as a trailing 15-minute average:
 
-\[
+$$
 \bar P_t=
 \frac{P_t+P_{t-1}+P_{t-2}}{3}.
-\]
+$$
 
 Then:
 
-\[
+$$
 \text{Demand charge}
 =
 15.51\max_t\bar P_t.
-\]
+$$
 
 ### Simple example
 
 A 100 kW monthly billed peak gives:
 
-\[
+$$
 15.51\times100=\$1,551.
-\]
+$$
 
 A 60 kW peak gives:
 
-\[
+$$
 15.51\times60=\$930.60.
-\]
+$$
 
 Same total energy can therefore lead to very different bills.
 
@@ -370,32 +370,32 @@ That is the central motivation for the bill-oriented optimizer.
 
 The main mathematical variable is:
 
-\[
+$$
 R_{it}\ge0.
-\]
+$$
 
 Read this as:
 
-> “Charging current for vehicle \(i\) during time interval \(t\).”
+> “Charging current for vehicle $i$ during time interval $t$.”
 
 It forms a matrix:
 
-\[
+$$
 R\in\mathbb R^{n\times T}.
-\]
+$$
 
 - Rows: vehicles.
 - Columns: future five-minute periods.
 
 Example:
 
-\[
+$$
 R=
 \begin{bmatrix}
 20&20&10&0\\
 0&10&20&20
 \end{bmatrix}.
-\]
+$$
 
 Interpretation:
 - EV 1 gets 20 A, 20 A, 10 A, then zero.
@@ -409,36 +409,36 @@ This is a schedule, not a prediction of driver behavior.
 
 | Symbol | Meaning | Typical code name |
 |---|---|---|
-| \(i\) | EV index | Row index |
-| \(t\) | Time-period index | Column index |
-| \(T\) | Number of planning intervals | `T` |
-| \(m\) | Network-constraint index | Constraint row |
-| \(s\) | Historical scenario index | Scenario arrays |
-| \(R_{it}\) | Charging current, A | `R`, `rates` |
-| \(\bar r_{it}\) | Current upper bound | `evs.ub` |
-| \(V_i\) | Charger voltage | `infra.voltages` |
-| \(e_i\) | Remaining energy requirement | `evs.demand` |
-| \(E_{it}\) | Energy delivered in one interval | Per-period energy expressions |
-| \(u_i\) | Unmet energy | `u` |
-| \(P_t\) | Aggregate EV power | `P` |
-| \(p_t\) | Energy price | `prices` |
-| \(d\) | Demand-charge rate | `demand_charge` |
-| \(\bar P_t\) | Rolling billed power | `billed` |
-| \(P^\star\) | Historical peak-planning target | `peak_target_kw` |
-| \(F_{\mathrm{mtd}}\) | Month-to-date billed peak | `month_peak_kw` |
-| \(F\) | Current planning floor | `DemandSpec.floor_kw` |
-| \(A\) | Network coefficient matrix | `infra.A` |
-| \(c_m\) | Current limit for constraint \(m\) | `infra.limits` |
-| \(\phi_i\) | Phase angle | `infra.phases` |
-| \(I_t^-\) | Negative-sequence current | Computed from coefficients |
-| \(d_{is}\) | Remaining time in scenario \(s\) | Scenario departure array |
-| \(k_{is}\) | Remaining energy in scenario \(s\) | Scenario energy array |
-| \(\pi_{is}\) | Scenario probability/weight | Scenario weights |
-| \(z_{is}\) | Scenario-specific unmet energy | `z` |
-| \(C_i(d)\) | Energy delivered by deadline \(d\) | Running total `C` |
-| \(S_t\) | Nonnegative grid import | `S` in PV formulation |
-| \(\widehat{pv}_t\) | Forecast solar power | `pv_hat` |
-| \(\delta_t\) | Solar deviation allowance | `pv_dev` |
+| $i$ | EV index | Row index |
+| $t$ | Time-period index | Column index |
+| $T$ | Number of planning intervals | `T` |
+| $m$ | Network-constraint index | Constraint row |
+| $s$ | Historical scenario index | Scenario arrays |
+| $R_{it}$ | Charging current, A | `R`, `rates` |
+| $\bar r_{it}$ | Current upper bound | `evs.ub` |
+| $V_i$ | Charger voltage | `infra.voltages` |
+| $e_i$ | Remaining energy requirement | `evs.demand` |
+| $E_{it}$ | Energy delivered in one interval | Per-period energy expressions |
+| $u_i$ | Unmet energy | `u` |
+| $P_t$ | Aggregate EV power | `P` |
+| $p_t$ | Energy price | `prices` |
+| $d$ | Demand-charge rate | `demand_charge` |
+| $\bar P_t$ | Rolling billed power | `billed` |
+| $P^\star$ | Historical peak-planning target | `peak_target_kw` |
+| $F_{\mathrm{mtd}}$ | Month-to-date billed peak | `month_peak_kw` |
+| $F$ | Current planning floor | `DemandSpec.floor_kw` |
+| $A$ | Network coefficient matrix | `infra.A` |
+| $c_m$ | Current limit for constraint $m$ | `infra.limits` |
+| $\phi_i$ | Phase angle | `infra.phases` |
+| $I_t^-$ | Negative-sequence current | Computed from coefficients |
+| $d_{is}$ | Remaining time in scenario $s$ | Scenario departure array |
+| $k_{is}$ | Remaining energy in scenario $s$ | Scenario energy array |
+| $\pi_{is}$ | Scenario probability/weight | Scenario weights |
+| $z_{is}$ | Scenario-specific unmet energy | `z` |
+| $C_i(d)$ | Energy delivered by deadline $d$ | Running total `C` |
+| $S_t$ | Nonnegative grid import | `S` in PV formulation |
+| $\widehat{pv}_t$ | Forecast solar power | `pv_hat` |
+| $\delta_t$ | Solar deviation allowance | `pv_dev` |
 
 **Naming trap:** `S` is also used locally in the tapering implementation for previously delivered energy. Variable names are local to their context; not every `S` means grid import.
 
@@ -452,17 +452,17 @@ The objective says what is desirable. Constraints say what is permitted.
 
 ## 5.1 Charging-rate and availability constraints
 
-\[
+$$
 0\le R_{it}\le\bar r_{it}.
-\]
+$$
 
 For a connected EV, the upper bound may be 32 A or lower.
 
 Outside its availability window:
 
-\[
+$$
 \bar r_{it}=0.
-\]
+$$
 
 Therefore, the same constraint handles both:
 - Maximum charging current.
@@ -486,38 +486,38 @@ A deployment would need:
 
 ## 5.2 Energy requirement
 
-Energy delivered to EV \(i\):
+Energy delivered to EV $i$:
 
-\[
+$$
 \sum_t E_{it}
 =
 \sum_t\frac{V_iR_{it}\Delta}{1000}.
-\]
+$$
 
 The deterministic formulation uses:
 
-\[
+$$
 \sum_tE_{it}+u_i=e_i,
 \qquad u_i\ge0.
-\]
+$$
 
-### Why add \(u_i\)?
+### Why add $u_i$?
 
 Suppose the EV needs 10 kWh but can physically receive only 8 kWh before departure.
 
 Without slack:
 
-\[
+$$
 8=10
-\]
+$$
 
 is impossible, so the problem becomes infeasible.
 
 With slack:
 
-\[
+$$
 8+2=10.
-\]
+$$
 
 The optimizer records 2 kWh of unmet demand.
 
@@ -535,7 +535,7 @@ The report’s hard-energy experiment encountered about **32–38 infeasible cal
 
 ### Important qualification
 
-A penalty of $100/kWh strongly discourages unmet energy, but it is still a **soft preference**, not a mathematical guarantee of full delivery.
+A penalty of \$100/kWh strongly discourages unmet energy, but it is still a **soft preference**, not a mathematical guarantee of full delivery.
 
 ---
 
@@ -548,20 +548,20 @@ The network has eight modeled limits:
 
 The phasor constraint is:
 
-\[
+$$
 \left|
 \sum_iA_{mi}R_{it}e^{j\phi_i}
 \right|
 \le c_m.
-\]
+$$
 
 ### What does each part mean?
 
-- \(A_{mi}\): how EV \(i\)'s current contributes to network element \(m\).
-- \(R_{it}\): chosen charging current.
-- \(e^{j\phi_i}\): phase-angle information.
+- $A_{mi}$: how EV $i$'s current contributes to network element $m$.
+- $R_{it}$: chosen charging current.
+- $e^{j\phi_i}$: phase-angle information.
 - Absolute value: magnitude of the resulting complex current.
-- \(c_m\): allowable magnitude.
+- $c_m$: allowable magnitude.
 
 ### Why complex numbers?
 
@@ -571,13 +571,13 @@ They must be added as vectors, not just ordinary positive numbers.
 
 Using:
 
-\[
+$$
 e^{j\phi}=\cos\phi+j\sin\phi,
-\]
+$$
 
 the constraint becomes:
 
-\[
+$$
 \left\|
 \begin{bmatrix}
 \sum_iA_{mi}\cos\phi_iR_{it}\\
@@ -585,7 +585,7 @@ the constraint becomes:
 \end{bmatrix}
 \right\|_2
 \le c_m.
-\]
+$$
 
 This is a **second-order cone constraint**.
 
@@ -603,9 +603,9 @@ margin = 1e-3
 
 So it effectively limits current to:
 
-\[
+$$
 c_m-0.001\text{ A}.
-\]
+$$
 
 This avoids tiny solver-tolerance violations.
 
@@ -621,7 +621,7 @@ Do not say this is a full nonlinear AC power-flow model with every voltage, loss
 
 The report’s main objective is:
 
-\[
+$$
 \begin{aligned}
 J={}&
 w_c\sum_tp_tP_t\Delta\\
@@ -631,7 +631,7 @@ w_c\sum_tp_tP_t\Delta\\
 &+\frac{w_\phi\Delta}{I_{\mathrm{ref}}}\sum_t|I_t^-|^2\\
 &+w_u\sum_iu_i.
 \end{aligned}
-\]
+$$
 
 You should explain this **term by term**, not read the entire equation aloud.
 
@@ -639,9 +639,9 @@ You should explain this **term by term**, not read the entire equation aloud.
 
 ## 6.1 Energy-cost term
 
-\[
+$$
 w_c\sum_tp_tP_t\Delta.
-\]
+$$
 
 Purpose:
 
@@ -653,9 +653,9 @@ Purpose:
 
 ## 6.2 Monthly demand-charge term
 
-\[
+$$
 w_dd\max\left\{\max_t\bar P_t,F\right\}.
-\]
+$$
 
 Purpose:
 
@@ -663,13 +663,13 @@ Purpose:
 
 The floor is implemented as:
 
-\[
+$$
 F=\max\left(
 P^\star,\,
 \text{previous-days peak},\,
 \text{today's peak so far}
 \right).
-\]
+$$
 
 ### Why remember the previous peak?
 
@@ -679,9 +679,9 @@ Using 65 kW tomorrow does not increase the demand charge.
 
 Using 80 kW adds:
 
-\[
+$$
 (80-70)\times15.51=\$155.10.
-\]
+$$
 
 Therefore, the marginal cost of peak demand depends on the month’s history.
 
@@ -693,7 +693,7 @@ Energy charges still apply.
 
 ---
 
-## 6.3 What is \(P^\star=54.93\) kW?
+## 6.3 What is $P^\star=54.93$ kW?
 
 It is a historical planning target.
 
@@ -719,25 +719,25 @@ It is a design choice, not a proven universally optimal percentile.
 
 ## 6.4 How is the maximum made solver-friendly?
 
-Introduce an auxiliary peak variable \(q\):
+Introduce an auxiliary peak variable $q$:
 
-\[
+$$
 q\ge\bar P_t\quad\forall t,
-\]
+$$
 
-\[
+$$
 q\ge F.
-\]
+$$
 
 Then minimize:
 
-\[
+$$
 dq.
-\]
+$$
 
 This is called an **epigraph formulation**.
 
-Because increasing \(q\) costs money, the solver chooses the smallest feasible \(q\).
+Because increasing $q$ costs money, the solver chooses the smallest feasible $q$.
 
 CVXPY performs this kind of transformation for expressions such as:
 
@@ -749,19 +749,19 @@ cp.maximum(cp.max(billed), demand.floor_kw)
 
 ## 6.5 Peak-exceedance hinge
 
-\[
+$$
 w_h\Delta\sum_t(\bar P_t-F)^+,
-\]
+$$
 
 where:
 
-\[
+$$
 x^+=\max(x,0).
-\]
+$$
 
 Example:
-- \(\bar P_t=60\), \(F=55\): penalty applies to 5.
-- \(\bar P_t=50\), \(F=55\): penalty is zero.
+- $\bar P_t=60$, $F=55$: penalty applies to 5.
+- $\bar P_t=50$, $F=55$: penalty is zero.
 
 The demand term cares about the single highest peak.
 
@@ -773,9 +773,9 @@ It does not itself force a perfectly smooth profile.
 
 ## 6.6 Valley filling: why square the power?
 
-\[
+$$
 \frac{w_v\Delta}{P_{\mathrm{ref}}}\sum_tP_t^2.
-\]
+$$
 
 Consider two schedules with equal energy over two equal intervals:
 
@@ -784,13 +784,13 @@ Consider two schedules with equal energy over two equal intervals:
 
 Their squared-load sums:
 
-\[
+$$
 10^2+0^2=100,
-\]
+$$
 
-\[
+$$
 5^2+5^2=50.
-\]
+$$
 
 The second is preferred.
 
@@ -806,20 +806,20 @@ Also, the base experiment does not model a general building-load profile. It pri
 
 ## 6.7 Phase-balancing term
 
-\[
+$$
 \frac{w_\phi\Delta}{I_{\mathrm{ref}}}
 \sum_t|I_t^-|^2.
-\]
+$$
 
 The negative-sequence current is:
 
-\[
+$$
 I_t^-=
 \frac13\left(
 I_{A,t}+a^2I_{B,t}+aI_{C,t}
 \right),
 \qquad a=e^{j2\pi/3}.
-\]
+$$
 
 You do not need to derive symmetrical components during the presentation.
 
@@ -837,9 +837,9 @@ Load flattening and phase balancing solve different problems.
 
 For the modeled line-to-line charger connections:
 
-\[
+$$
 I_A+I_B+I_C=0.
-\]
+$$
 
 The zero-sequence component is therefore zero in this model.
 
@@ -847,10 +847,10 @@ The zero-sequence component is therefore zero in this model.
 
 ## 6.8 Unmet-energy penalty
 
-\[
+$$
 w_u\sum_iu_i,
 \qquad w_u=100\text{ dollars/kWh}.
-\]
+$$
 
 This is a **modeling penalty**, not a fee actually paid to the electricity utility.
 
@@ -860,13 +860,13 @@ Its job is to make service failures expensive in the optimization.
 
 They are not the same.
 
-\[
+$$
 \text{Optimization objective}
 =
 \text{bill-related terms}
 +
 \text{service and grid-quality penalties}.
-\]
+$$
 
 The reported electricity bill excludes artificial shortfall, flatness, and phase penalties.
 
@@ -884,9 +884,9 @@ early = 1e-3
 
 The term is approximately:
 
-\[
+$$
 10^{-3}\sum_t\frac{t}{T}P_t\Delta.
-\]
+$$
 
 Later charging receives slightly more penalty.
 
@@ -904,11 +904,11 @@ An additional shortfall variable measures how much scheduled energy remains unde
 
 Penalty:
 
-\[
+$$
 1\text{ dollar/kWh}.
-\]
+$$
 
-This is softer than the main $100/kWh unmet-energy penalty.
+This is softer than the main \$100/kWh unmet-energy penalty.
 
 **In stochastic mode, the finish-by term is disabled**, because scenario-specific deadlines already represent departure risk.
 
@@ -960,9 +960,9 @@ Quadratic objective, usually with linear constraints in the standard definition.
 
 Contains second-order cone constraints such as:
 
-\[
+$$
 \|Bx+b\|_2\le c^\top x+d.
-\]
+$$
 
 ### Your project
 
@@ -1035,9 +1035,9 @@ Replanning prevents an old plan from being followed blindly.
 
 The horizon extends to the latest relevant departure, capped at:
 
-\[
+$$
 144\times5\text{ minutes}=12\text{ hours}.
-\]
+$$
 
 The report documents an unusually long stay of about 52 hours.
 
@@ -1169,13 +1169,13 @@ Allocate as much as possible while retaining network feasibility.
 
 Prioritize the EV with the least scheduling flexibility:
 
-\[
+$$
 \text{Laxity}
 =
 \text{time left}
 -
 \frac{\text{energy left}}{\text{maximum power}}.
-\]
+$$
 
 ### Round Robin
 
@@ -1207,29 +1207,29 @@ That explains why uncontrolled charging can report high energy delivery despite 
 
 | Controller | Bill | Billed peak | Delivery |
 |---|---:|---:|---:|
-| Uncontrolled | $4,845 | 191.6 kW | 100.1% |
-| EDF | $4,116 | 144.0 kW | 99.9% |
-| LLF | $4,096 | 142.9 kW | 99.9% |
-| Round Robin | $4,088 | 142.5 kW | 99.8% |
-| **MPC-BILL-LP** | **$3,031** | **70.3 kW** | **98.9%** |
-| MPC-COMBINED-QP | $3,518 | 77.6 kW | 96.5% |
-| Offline BILL-LP | $3,150 | 71.2 kW | 99.6% |
+| Uncontrolled | \$4,845 | 191.6 kW | 100.1% |
+| EDF | \$4,116 | 144.0 kW | 99.9% |
+| LLF | \$4,096 | 142.9 kW | 99.9% |
+| Round Robin | \$4,088 | 142.5 kW | 99.8% |
+| **MPC-BILL-LP** | **\$3,031** | **70.3 kW** | **98.9%** |
+| MPC-COMBINED-QP | \$3,518 | 77.6 kW | 96.5% |
+| Offline BILL-LP | \$3,150 | 71.2 kW | 99.6% |
 
 ### Calculate the savings
 
 Relative to Round Robin:
 
-\[
+$$
 \frac{4088-3031}{4088}\times100
 \approx25.9\%.
-\]
+$$
 
 Peak reduction:
 
-\[
+$$
 \frac{142.5-70.3}{142.5}\times100
 \approx50.7\%.
-\]
+$$
 
 ### What should you say?
 
@@ -1340,17 +1340,17 @@ Replanning cannot recover time already lost.
 
 It includes a linear taper bound:
 
-\[
+$$
 E_{it}\le
 \kappa_i
 \left(
 H_i-\sum_{\tau<t}E_{i\tau}
 \right),
-\]
+$$
 
 where:
-- \(H_i\): initial battery headroom.
-- \(\kappa_i\): precomputed factor from battery parameters.
+- $H_i$: initial battery headroom.
+- $\kappa_i$: precomputed factor from battery parameters.
 
 As previous energy delivery increases, remaining headroom decreases, reducing allowable energy per period.
 
@@ -1423,13 +1423,13 @@ The implementation uses:
 
 ## 13.2 Median predictor
 
-\[
+$$
 \widehat{\text{stay}}=Q_{0.5}(\text{historical stays}),
-\]
+$$
 
-\[
+$$
 \widehat{\text{energy}}=Q_{0.5}(\text{historical energies}).
-\]
+$$
 
 This gives a typical driver estimate.
 
@@ -1472,13 +1472,13 @@ Without a tolerance, an EV might remain a few watt-hours below its predicted req
 
 Uses:
 
-\[
+$$
 \widehat{\text{stay}}=Q_{0.25},
-\]
+$$
 
-\[
+$$
 \widehat{\text{energy}}=Q_{0.75}.
-\]
+$$
 
 Interpretation:
 
@@ -1585,39 +1585,39 @@ If no historical pair remains:
 
 Energy scheduled before scenario departure:
 
-\[
+$$
 C_i(d_{is})=
 \sum_{t<d_{is}}E_{it}.
-\]
+$$
 
 Unmet energy in that scenario:
 
-\[
+$$
 \left(k_{is}-C_i(d_{is})\right)^+.
-\]
+$$
 
 Implement with a nonnegative auxiliary variable:
 
-\[
+$$
 z_{is}\ge k_{is}-C_i(d_{is}),
-\]
+$$
 
-\[
+$$
 z_{is}\ge0.
-\]
+$$
 
 Expected shortfall:
 
-\[
+$$
 \sum_i\sum_s\pi_{is}z_{is}.
-\]
+$$
 
 Add the penalty:
 
-\[
+$$
 w_{\mathrm{ES}}
 \sum_i\sum_s\pi_{is}z_{is}.
-\]
+$$
 
 ### Read it aloud like this
 
@@ -1641,21 +1641,21 @@ Then:
 
 Expected shortfall:
 
-\[
+$$
 0.5(5)+0.5(0)=2.5\text{ kWh}.
-\]
+$$
 
 At:
 
-\[
+$$
 w_{\mathrm{ES}}=30\text{ dollars/kWh},
-\]
+$$
 
 the penalty is:
 
-\[
+$$
 30\times2.5=\$75.
-\]
+$$
 
 The optimizer compares that penalty with the extra electricity, demand, and flatness costs of charging earlier.
 
@@ -1671,9 +1671,9 @@ For scenario-based EVs:
 - Allow scheduling up to the latest scenario departure.
 - Cap energy at the largest plausible remaining request:
 
-\[
+$$
 \sum_tE_{it}\le\max_sk_{is}.
-\]
+$$
 
 - Disable the single-deadline finish-by penalty.
 
@@ -1719,9 +1719,9 @@ Therefore, SAA does not destroy convexity.
 
 It means:
 
-\[
+$$
 w_{\mathrm{ES}}=30\text{ dollars/kWh}.
-\]
+$$
 
 **It does not mean 30 scenarios.**
 
@@ -1750,9 +1750,9 @@ It was an empirical compromise:
 
 | Information | Combined-QP bill / delivery | BILL-LP bill / delivery |
 |---|---|---|
-| Median | $2,782 / 76.4% | $2,924 / 92.3% |
-| Conservative | $3,470 / 94.3% | $3,261 / 97.9% |
-| SAA-30 | $3,178 / 96.3% | $3,197 / 97.7% |
+| Median | \$2,782 / 76.4% | \$2,924 / 92.3% |
+| Conservative | \$3,470 / 94.3% | \$3,261 / 97.9% |
+| SAA-30 | \$3,178 / 96.3% | \$3,197 / 97.7% |
 
 ### How to explain the slide
 
@@ -1772,11 +1772,11 @@ It improves the trade-off; for BILL-LP it saves money with a small delivery redu
 
 It means:
 
-\[
+$$
 100\times
 \frac{\text{total energy delivered}}
 {\text{total energy requested}}.
-\]
+$$
 
 It does **not** mean 96.3% of vehicles were fully charged.
 
@@ -1798,9 +1798,9 @@ If:
 
 Then:
 
-\[
+$$
 \text{Import}=80-30=50\text{ kW}.
-\]
+$$
 
 If:
 - EV load is 20 kW.
@@ -1816,29 +1816,29 @@ The remaining 10 kW earns no export revenue in this model.
 
 Introduce nonnegative import:
 
-\[
+$$
 S_t\ge P_t-\widehat{pv}_t,
-\]
+$$
 
-\[
+$$
 S_t\ge0.
-\]
+$$
 
 Cost and demand objectives push it toward:
 
-\[
+$$
 S_t=\max(P_t-\widehat{pv}_t,0).
-\]
+$$
 
 Then:
-- Energy cost uses \(S_t\).
-- Demand charge uses rolling \(\bar S_t\).
-- Peak-exceedance hinge uses \(S_t\).
+- Energy cost uses $S_t$.
+- Demand charge uses rolling $\bar S_t$.
+- Peak-exceedance hinge uses $S_t$.
 - Valley filling uses the signed net load:
 
-\[
+$$
 \sum_t(P_t-\widehat{pv}_t)^2.
-\]
+$$
 
 ### Why distinguish import and signed net load?
 
@@ -1891,11 +1891,11 @@ That is a limitation.
 
 The cloud state follows:
 
-\[
+$$
 z_t=\rho z_{t-1}+\sqrt{1-\rho^2}\epsilon_t,
-\]
+$$
 
-with \(\rho=0.9\).
+with $\rho=0.9$.
 
 Interpretation:
 
@@ -1917,13 +1917,13 @@ For farther intervals, the forecast gradually returns to the day-ahead estimate.
 
 The decay time is two hours:
 
-\[
+$$
 24\text{ five-minute periods}.
-\]
+$$
 
 Conceptually:
 
-\[
+$$
 \widehat{pv}_{t+h|t}
 =
 pv^{\mathrm{clear}}_{t+h}
@@ -1931,7 +1931,7 @@ pv^{\mathrm{clear}}_{t+h}
 \widehat k+
 (c_{\mathrm{observed}}-\widehat k)e^{-h/24}
 \right].
-\]
+$$
 
 The controller uses previous observations—not future realized PV.
 
@@ -1951,9 +1951,9 @@ The bill-oriented controller plans:
 
 Expected import:
 
-\[
+$$
 85-30=55\text{ kW}.
-\]
+$$
 
 So it expects no increase in the demand charge.
 
@@ -1961,9 +1961,9 @@ But actual PV is only 20 kW.
 
 Actual import becomes:
 
-\[
+$$
 85-20=65\text{ kW}.
-\]
+$$
 
 If this raises the rolling billed peak, the new paid peak becomes 65 kW.
 
@@ -2042,25 +2042,25 @@ But it can estimate future demand from history.
 ## 17.1 Ghost EVs
 
 For each future arrival-hour bin, the code estimates:
-- Expected arrivals per day: \(\lambda_b\).
-- Mean energy per arrival: \(\bar k_b\).
+- Expected arrivals per day: $\lambda_b$.
+- Mean energy per arrival: $\bar k_b$.
 - Mean stay.
 
 It creates aggregate virtual EVs, split across phase groups.
 
 Per group:
 
-\[
+$$
 \text{Expected energy}
 =
 \frac{\lambda_b\bar k_b}{3},
-\]
+$$
 
-\[
+$$
 \text{Current cap}
 =
 \frac{\lambda_b\times32}{3}.
-\]
+$$
 
 These are **ghost EVs**.
 
@@ -2137,12 +2137,12 @@ It demonstrates that:
 
 Combined-QP with SAA-30 and corrected forecast:
 
-- Bill: **$1,904**.
+- Bill: **\$1,904**.
 - Billed import peak: **60.2 kW**.
 - Delivery: **97.8%**.
 
 Offline bill benchmark:
-- Bill: $1,675.
+- Bill: \$1,675.
 - Delivery: 99.6%.
 
 ### Careful wording for “best online controller”
@@ -2187,40 +2187,40 @@ These are different approaches.
 
 Forecast PV:
 
-\[
+$$
 \widehat{pv}_t.
-\]
+$$
 
 Maximum deviation:
 
-\[
+$$
 \delta_t.
-\]
+$$
 
 Protected PV:
 
-\[
+$$
 \widehat{pv}_t-\Gamma_{\mathrm{solar}}\delta_t.
-\]
+$$
 
 Then:
 
-\[
+$$
 S_t\ge
 P_t-
 \left(
 \widehat{pv}_t-\Gamma_{\mathrm{solar}}\delta_t
 \right).
-\]
+$$
 
-- \(\Gamma_{\mathrm{solar}}=0\): trust the forecast.
-- \(\Gamma_{\mathrm{solar}}=1\): use the full specified shortfall protection.
+- $\Gamma_{\mathrm{solar}}=0$: trust the forecast.
+- $\Gamma_{\mathrm{solar}}=1$: use the full specified shortfall protection.
 
 In this experiment:
 
-\[
+$$
 \delta_t=0.4\widehat{pv}_t.
-\]
+$$
 
 ---
 
@@ -2228,22 +2228,22 @@ In this experiment:
 
 Prices can rise by up to 50%:
 
-\[
+$$
 p_t^{\mathrm{actual}}
 =
 p_t(1+\rho z_t),
 \qquad \rho=0.5.
-\]
+$$
 
 The uncertainty variables satisfy:
 
-\[
+$$
 0\le z_t\le1,
-\]
+$$
 
-\[
+$$
 \sum_tz_t\le\Gamma_{\mathrm{price}}.
-\]
+$$
 
 A budget of 12 allows the equivalent of twelve full five-minute deviations.
 
@@ -2259,28 +2259,28 @@ The inner price-uncertainty problem is linear.
 
 Using LP duality, it becomes:
 
-\[
+$$
 \sum_tp_tS_t\Delta
 +
 \Gamma_{\mathrm{price}}\lambda
 +
 \sum_t\mu_t,
-\]
+$$
 
 subject to:
 
-\[
+$$
 \lambda+\mu_t
 \ge
 \rho p_tS_t\Delta,
-\]
+$$
 
-\[
+$$
 \lambda,\mu_t\ge0.
-\]
+$$
 
 Here:
-- \(\lambda,\mu_t\) are mathematical auxiliary variables.
+- $\lambda,\mu_t$ are mathematical auxiliary variables.
 - They are not charger commands.
 
 The new cost formulation is linear, while the full network-constrained problem still includes SOC constraints.
@@ -2291,9 +2291,9 @@ The new cost formulation is linear, while the full network-constrained problem s
 
 Clipped grid import includes:
 
-\[
+$$
 \max(P_t-pv_t,0).
-\]
+$$
 
 A time-coupled worst-case solar problem involves maximizing a convex piecewise-linear expression over an uncertainty set.
 
@@ -2313,8 +2313,8 @@ Reported net energy costs:
 
 | Metric | Nominal | Selected robust configuration |
 |---|---:|---:|
-| Mean daily cost | $54.95 | $50.33 |
-| Worst sampled daily cost | $65.61 | $57.37 |
+| Mean daily cost | \$54.95 | \$50.33 |
+| Worst sampled daily cost | \$65.61 | \$57.37 |
 
 That is approximately:
 - 8% lower mean.
@@ -2512,7 +2512,7 @@ Do not confuse:
 
 ## 19.5 An important sparse implementation detail
 
-Mathematically we describe a full matrix \(R\).
+Mathematically we describe a full matrix $R$.
 
 But many entries are forced to zero because vehicles are absent.
 
@@ -2539,9 +2539,9 @@ Some network constraints cannot possibly bind for a particular interval.
 
 The code checks a conservative upper bound:
 
-\[
+$$
 \sum_i|A_{mi}|\bar r_{it}.
-\]
+$$
 
 If this is already below the limit, the corresponding cone can be omitted.
 
@@ -2555,9 +2555,9 @@ For scenario shortfall and tapering, the code needs cumulative energy.
 
 Instead of a dense cumulative-sum representation, it uses:
 
-\[
+$$
 C_{t+1}=C_t+E_t.
-\]
+$$
 
 Each equality connects neighboring intervals.
 
@@ -2709,9 +2709,9 @@ Computes:
 
 Maximum utilization:
 
-\[
+$$
 \max_{m,t}\frac{|I_{mt}|}{c_m}.
-\]
+$$
 
 - Below 1: within limits.
 - Equal to 1: at a limit.
@@ -2719,15 +2719,15 @@ Maximum utilization:
 
 PV self-consumption:
 
-\[
+$$
 \frac{\text{PV energy used by EVs}}{\text{PV energy generated}}.
-\]
+$$
 
 PV self-sufficiency:
 
-\[
+$$
 \frac{\text{PV energy used by EVs}}{\text{total EV energy}}.
-\]
+$$
 
 These are different metrics.
 
@@ -2848,9 +2848,9 @@ It gives evidence that tested implementation behaviors match their intended defi
 
 The control period is:
 
-\[
+$$
 300\text{ seconds}.
-\]
+$$
 
 Selected reported results:
 
@@ -2874,9 +2874,9 @@ The slowest observed call.
 
 ### Main conclusion
 
-\[
+$$
 21.4\text{ s}<300\text{ s}.
-\]
+$$
 
 The tested online controllers finish within the control interval.
 
@@ -2932,7 +2932,7 @@ These are speaking guides. Understand them first; do not read them mechanically.
 
 > “Many vehicles arrive in the morning, so immediate charging creates a large demand peak. The bill includes both time-of-use energy charges and a monthly charge based on the highest 15-minute demand. Most vehicles remain parked longer than their required charging time, so we can redistribute charging. The challenge is to reduce cost while respecting the network and supplying energy before departure.”
 
-When pointing at \(P^\star\):
+When pointing at $P^\star$:
 
 > “This is a historical planning target, not the transformer limit or a guaranteed cap.”
 
@@ -2950,7 +2950,7 @@ Then:
 
 ## Slide 4 — Monthly results
 
-> “With monthly billing, the bill-oriented MPC reduces the bill to $3,031 and the billed peak to 70.3 kW. Compared with the feasible heuristics, this is about a 26% bill reduction and roughly half the billed peak. It delivers 98.9% of the required energy. The combined objective costs more because it also values smoothness and phase balance.”
+> “With monthly billing, the bill-oriented MPC reduces the bill to \$3,031 and the billed peak to 70.3 kW. Compared with the feasible heuristics, this is about a 26% bill reduction and roughly half the billed peak. It delivers 98.9% of the required energy. The combined objective costs more because it also values smoothness and phase balance.”
 
 If asked about OPT:
 
@@ -2970,7 +2970,7 @@ Point to the formula:
 
 ## Slide 6 — Solar
 
-> “With solar, the bill is based on net grid import. A bill-oriented controller may plan import exactly at the monthly peak already paid for. If solar output is lower than forecast, actual import exceeds that level and creates a new monthly peak. The staircase shows this ratchet. Flattening and scenario-based charging reduce the effect. The corrected forecast configuration achieves $1,904, a 60.2 kW import peak, and 97.8% delivery.”
+> “With solar, the bill is based on net grid import. A bill-oriented controller may plan import exactly at the monthly peak already paid for. If solar output is lower than forecast, actual import exceeds that level and creates a new monthly peak. The staircase shows this ratchet. Flattening and scenario-based charging reduce the effect. The corrected forecast configuration achieves \$1,904, a 60.2 kW import peak, and 97.8% delivery.”
 
 ---
 
@@ -3058,7 +3058,7 @@ Also, some supplementary documents retain older descriptions and results. For to
 
 > “Some requests are infeasible within the available time and network capacity. Penalized slack keeps the controller operational and quantifies the shortfall.”
 
-## “Does $100/kWh guarantee complete charging?”
+## “Does \$100/kWh guarantee complete charging?”
 
 > “No. It strongly prioritizes delivery but remains a soft penalty.”
 
@@ -3072,7 +3072,7 @@ Also, some supplementary documents retain older descriptions and results. For to
 
 ## “What is SAA-30?”
 
-> “Sample-average expected-unmet-energy optimization with a penalty weight of $30/kWh, using up to 20 historical scenarios per EV.”
+> “Sample-average expected-unmet-energy optimization with a penalty weight of \$30/kWh, using up to 20 historical scenarios per EV.”
 
 ## “Is SAA a chance constraint?”
 
@@ -3113,9 +3113,9 @@ Vehicles often remain parked longer than their minimum charging time.
 ### Decision
 Current per EV per five-minute interval:
 
-\[
+$$
 R_{it}.
-\]
+$$
 
 ### Constraints
 - Charging bounds.
@@ -3138,7 +3138,7 @@ MPC: plan ahead, apply one interval, observe, repeat.
 **Python → CVXPY → Clarabel**, with **ACN-Sim** for simulation.
 
 ### S2 result
-**$4,088 → $3,031**, approximately 26% lower bill.
+**\$4,088 → \$3,031**, approximately 26% lower bill.
 
 **142.5 → 70.3 kW**, approximately 51% lower billed peak.
 
@@ -3157,7 +3157,7 @@ Solar forecast misses create irreversible increases in the monthly billed peak.
 Net-import scheduling, flattening, SAA, and corrected arrival forecasts.
 
 ### Final selected PV result
-**$1,904 · 60.2 kW · 97.8% delivery.**
+**\$1,904 · 60.2 kW · 97.8% delivery.**
 
 ### Computation
 Selected maximum online solve: **21.4 seconds**, versus a **300-second** control interval.
